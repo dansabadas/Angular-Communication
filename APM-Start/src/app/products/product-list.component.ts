@@ -4,15 +4,18 @@ import { IProduct } from './product';
 import { ProductService } from './product.service';
 import { NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs/Subscription';
+import { CriteriaComponent } from '../shared/criteria/criteria.component';
 
 @Component({
     templateUrl: './product-list.component.html',
     styleUrls: ['./product-list.component.css']
 })
 export class ProductListComponent implements OnInit, AfterViewInit {
+
     pageTitle: string = 'Product List';
     
     showImage: boolean;
+    includeDetail: boolean = true;
 
     imageWidth: number = 50;
     imageMargin: number = 2;
@@ -21,58 +24,23 @@ export class ProductListComponent implements OnInit, AfterViewInit {
     filteredProducts: IProduct[];
     products: IProduct[];
 
-    @ViewChild('filterElement') filterElementRef: ElementRef;   // these get access to the corresponding DOM
-    private _sub: Subscription;
-    //@ViewChildren('filterElement, nameElement') filterElementRefs: QueryList<ElementRef>;
-    @ViewChildren(NgModel) filterElementRefs: QueryList<ElementRef>;
-
-    listFilter: string;  // superseeded by getter-setter see immediately below
-    // private _listFilter: string;
-    // get listFilter(): string {
-    //     return this._listFilter;
-    // }
-
-    // set listFilter(value: string)  {
-    //     this._listFilter = value;
-    //     this.performFilter(this._listFilter);
-    // }
-
-    //@ViewChild(NgModel) filterInput: NgModel;   // this gets access to the data
-    private _filterInput: NgModel;
-    get filterInput(): NgModel {
-        return this._filterInput;
-    }
-
-    @ViewChild(NgModel)
-    set filterInput(value: NgModel)  {
-        this._filterInput = value;
-        if(this.filterElementRef)
-            this.filterElementRef.nativeElement.focus();
-
-        if(this.filterInput && !this._sub)
-        this._sub = this.filterInput.valueChanges.subscribe(() => {
-                this.performFilter(this.listFilter);       
-            });
-    }
+    //@ViewChild('filterCriteria') filterComponent: CriteriaComponent;// 'filterCriteria' must be predefined in the html template
+    @ViewChild(CriteriaComponent) filterComponent: CriteriaComponent;
+    parentListFilter: string;
 
     constructor(private productService: ProductService) { 
         // in the constructor the view is not yet rendered
     }
 
     ngAfterViewInit(): void {
-        console.log(this.filterElementRefs); 
-        console.log(this.filterInput); 
-        // this.filterElementRef.nativeElement.focus();
-        // this.filterInput.valueChanges.subscribe(() => {
-        //     this.performFilter(this.listFilter);       
-        // });
+        this.parentListFilter = this.filterComponent.listFilter;
     }
 
     ngOnInit(): void {
         this.productService.getProducts().subscribe(
             (products: IProduct[]) => {
                 this.products = products;
-                this.performFilter(this.listFilter);
+                this.performFilter(this.parentListFilter);
             },
             (error: any) => this.errorMessage = <any>error
         );
@@ -90,9 +58,4 @@ export class ProductListComponent implements OnInit, AfterViewInit {
             this.filteredProducts = this.products;
         }
     }
-
-    onFilterChange(filter: string){
-        this.listFilter = filter;
-        this.performFilter(this.listFilter);
-    } 
 }
